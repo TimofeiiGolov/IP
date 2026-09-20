@@ -1,0 +1,30 @@
+# Xcode
+DerivedData/
+build/
+.build/
+*.xcuserstate
+xcuserdata/
+UserInterfaceState.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+# Результаты тестов
+*.xcresult
+
+# Секреты и подписи
+*.p12
+*.cer
+*.mobileprovision
+.env
+Secrets/
+
+# macOS
+.DS_Store
+
+# Fastlane (если появится позже)
+fastlane/report.xml
+fastlane/screenshots/**/*.png
