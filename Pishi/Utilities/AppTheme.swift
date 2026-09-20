@@ -9,11 +9,9 @@ enum AppTheme {
     static let secondaryText = Color.secondary
 
     /// UIFont редактора с учётом настроек пользователя.
+    @MainActor
     static func editorUIFont(settings: SettingsStore) -> UIFont {
         let descriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: .body)
-            .addingAttributes([
-                .design: settings.fontChoice.uiFontDesign
-            ])
         let base = UIFont.systemFont(ofSize: settings.fontSize.basePointSize)
         let scaled = UIFontMetrics(forTextStyle: .body).scaledFont(for: base)
         if let designed = UIFont(descriptor: descriptor.withDesign(settings.fontChoice.uiFontDesign) ?? descriptor,
@@ -24,11 +22,13 @@ enum AppTheme {
     }
 
     /// Шрифт заголовка редактора.
+    @MainActor
     static func titleFont(settings: SettingsStore) -> Font {
         .system(size: settings.fontSize.basePointSize + 8, weight: .bold, design: settings.fontChoice.design)
     }
 
     /// Шрифт текста редактора (SwiftUI).
+    @MainActor
     static func bodyFont(settings: SettingsStore) -> Font {
         .system(size: settings.fontSize.basePointSize, design: settings.fontChoice.design)
     }
@@ -36,6 +36,6 @@ enum AppTheme {
 
 private extension UIFontDescriptor {
     func withDesign(_ design: UIFontDescriptor.SystemDesign) -> UIFontDescriptor? {
-        addingAttributes([.design: design])
+        addingAttributes([.systemDesign: design])
     }
 }

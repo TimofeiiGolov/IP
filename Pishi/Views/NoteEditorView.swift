@@ -10,7 +10,6 @@ struct NoteEditorView: View {
 
     let note: Note
     @State private var viewModel: NoteEditorViewModel
-    @State private var textFocus = false
     @State private var showDeleteConfirmation = false
     @State private var showStatistics = false
     @State private var exportURL: URL?
@@ -27,7 +26,7 @@ struct NoteEditorView: View {
             titleField
             Divider()
             if viewModel.isSearchVisible {
-                SearchBar(
+                InNoteSearchBar(
                     query: Binding(
                         get: { viewModel.inNoteSearchQuery },
                         set: { newValue in
@@ -50,11 +49,6 @@ struct NoteEditorView: View {
         .navigationTitle(Text(note.displayTitle).lineLimit(1))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
-        .onAppear {
-            if settings.autoFocus {
-                textFocus = true
-            }
-        }
         .onDisappear {
             // Сохраняем при уходе с экрана и чистим пустую заметку.
             viewModel.cleanupEmptyNoteIfNeeded()
@@ -79,8 +73,15 @@ struct NoteEditorView: View {
             }
         }
         .sheet(isPresented: $showStatistics) {
-            NoteStatisticsView(viewModel: viewModel)
-                .presentationDetents([.medium])
+            NoteStatisticsView(
+                wordCount: viewModel.wordCount,
+                characterCount: viewModel.characterCount,
+                lineCount: viewModel.lineCount,
+                updatedAt: viewModel.updatedAt,
+                showWordCount: settings.showWordCount,
+                showCharacterCount: settings.showCharacterCount
+            )
+            .presentationDetents([.medium])
         }
     }
 
@@ -111,18 +112,17 @@ struct NoteEditorView: View {
                     viewModel.contentChanged()
                 }
             ),
-            isFirstResponder: Binding(
-                get: { textFocus },
-                set: { textFocus = $0 }
-            ),
             font: AppTheme.editorUIFont(settings: settings),
+            autoFocus: settings.autoFocus,
+            lineWrapping: settings.lineWrapping,
             searchQuery: viewModel.isSearchVisible ? viewModel.inNoteSearchQuery : "",
-            highlightedRange: viewModel.currentMatchRange.flatMap { range in
+            currentMatchRange: viewModel.currentMatchRange.flatMap { range in
                 let lower = viewModel.text.distance(from: viewModel.text.startIndex, to: range.lowerBound)
                 let upper = viewModel.text.distance(from: viewModel.text.startIndex, to: range.upperBound)
                 return NSRange(location: lower, length: upper - lower)
             },
-            lineWrapping: settings.lineWrapping
+            onEditing: { viewModel.contentChanged() },
+            holder: viewModel.textViewHolder
         )
         .accessibilityIdentifier(Constants.Accessibility.bodyField)
         .accessibilityLabel(Constants.Strings.textField)
@@ -133,7 +133,14 @@ struct NoteEditorView: View {
             SaveStatusView(status: viewModel.saveStatus)
             Spacer()
             if settings.showStatistics {
-                NoteStatisticsView(viewModel: viewModel, compact: true)
+                NoteStatisticsView(
+                    wordCount: viewModel.wordCount,
+                    characterCount: viewModel.characterCount,
+                    lineCount: viewModel.lineCount,
+                    updatedAt: viewModel.updatedAt,
+                    showWordCount: settings.showWordCount,
+                    showCharacterCount: settings.showCharacterCount
+                )
             }
         }
         .padding(.horizontal)
@@ -148,7 +155,6 @@ struct NoteEditorView: View {
         ToolbarItem(placement: .topBarLeading) {
             Button {
                 viewModel.saveNow()
-                textFocus = false
                 dismiss()
             } label: {
                 Label(String(localized: "Назад"), systemImage: "chevron.backward")

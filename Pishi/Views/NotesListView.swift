@@ -365,8 +365,6 @@ struct NotesListView: View {
     }
 }
 
-extension Note: @retroactive Identifiable {}
-
 #Preview {
     NotesListView()
         .environmentObject(SettingsStore())

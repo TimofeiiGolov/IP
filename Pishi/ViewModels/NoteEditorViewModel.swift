@@ -42,7 +42,11 @@ final class NoteEditorViewModel {
     private let persistence: PersistenceController
     private var debounceTask: Task<Void, Never>?
     private let autosaveInterval: TimeInterval
-    private var backgroundObserver: NSObjectProtocol?
+    // nonisolated(unsafe): обращение только в init и deinit.
+    private nonisolated(unsafe) var backgroundObserver: NSObjectProtocol?
+
+    /// Держатель UITextView для команд undo/redo из тулбара.
+    let textViewHolder = TextViewHolder()
 
     /// Совпадения поиска внутри текста (диапазоны в символах String).
     var searchMatches: [Range<String.Index>] {
@@ -158,6 +162,14 @@ final class NoteEditorViewModel {
         inNoteSearchQuery = ""
         currentMatchIndex = 0
     }
+
+    // MARK: - Undo/Redo
+
+    var canUndo: Bool { textViewHolder.textView?.undoManager?.canUndo ?? false }
+    var canRedo: Bool { textViewHolder.textView?.undoManager?.canRedo ?? false }
+
+    func undo() { textViewHolder.textView?.undoManager?.undo() }
+    func redo() { textViewHolder.textView?.undoManager?.redo() }
 
     // MARK: - Действия меню
 

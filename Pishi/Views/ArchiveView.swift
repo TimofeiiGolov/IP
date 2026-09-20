@@ -12,7 +12,7 @@ struct ArchiveView: View {
 
     var body: some View {
         Group {
-            if let vm {
+            if let vm = viewModel {
                 content(vm: vm)
             } else {
                 ProgressView()
