@@ -46,7 +46,7 @@ struct NoteEditorView: View {
             Divider()
             bottomBar
         }
-        .navigationTitle(Text(note.displayTitle).lineLimit(1))
+        .navigationTitle(note.displayTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
         .onDisappear {
