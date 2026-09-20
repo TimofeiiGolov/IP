@@ -14,7 +14,7 @@ concurrency:
 env:
   PROJECT: Pishi.xcodeproj
   SCHEME: Pishi
-  DESTINATION: platform=iOS Simulator,name=iPhone 16,OS=latest
+  DESTINATION: platform=iOS Simulator,name=iPhone 15
 
 jobs:
   build-and-test:
