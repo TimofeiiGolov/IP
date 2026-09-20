@@ -32,18 +32,24 @@ jobs:
           xcodebuild -version
           swift --version
 
+      - name: Download iOS Runtime (if missing)
+        run: |
+          # Проверяем наличие iOS 18.2, если нет - скачиваем
+          if ! xcrun simctl list runtimes | grep -q "iOS 18.2"; then
+            echo "iOS 18.2 runtime not found. Downloading..."
+            xcodebuild -downloadPlatform iOS -buildVersion 18.2
+          else
+            echo "iOS 18.2 runtime is already installed."
+          fi
+
       - name: Find available iPhone Simulator
         id: find_sim
         run: |
-          # Пытаемся найти первый доступный iPhone-симулятор
-          UDID=$(xcrun simctl list devices available | grep -m 1 -E "iPhone" | sed -E 's/.*\(([-0-9A-F]+)\).*/\1/')
+          # Ищем первый доступный iPhone, исключая placeholder-устройства
+          UDID=$(xcrun simctl list devices available | grep -E "iPhone" | grep -v "Placeholder" | head -n 1 | sed -E 's/.*\(([-0-9A-F]+)\).*/\1/')
           if [ -z "$UDID" ]; then
-            echo "No iPhone simulator found. Downloading iOS runtime..."
-            xcodebuild -downloadPlatform iOS
-            UDID=$(xcrun simctl list devices available | grep -m 1 -E "iPhone" | sed -E 's/.*\(([-0-9A-F]+)\).*/\1/')
-          fi
-          if [ -z "$UDID" ]; then
-            echo "Still no iPhone simulator. Exiting."
+            echo "No valid iPhone simulator found. Listing all devices:"
+            xcrun simctl list devices available
             exit 1
           fi
           echo "UDID=$UDID" >> $GITHUB_OUTPUT
