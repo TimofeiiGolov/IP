@@ -12,7 +12,7 @@ final class PishiUITests: XCTestCase {
         app.launch()
     }
 
-    override func tearDownWithError() {
+    override func tearDownWithError() throws {
         app = nil
     }
 
