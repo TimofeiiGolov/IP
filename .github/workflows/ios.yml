@@ -14,7 +14,6 @@ concurrency:
 env:
   PROJECT: Pishi.xcodeproj
   SCHEME: Pishi
-  DESTINATION: platform=iOS Simulator,name=iPhone 15
 
 jobs:
   build-and-test:
@@ -27,15 +26,28 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
 
-      - name: Install iOS Runtime
-        run: |
-          xcodes runtime install "iOS 18.2" --proactive || true
-
       - name: Show environment versions
         run: |
           sw_vers
           xcodebuild -version
           swift --version
+
+      - name: Find available iPhone Simulator
+        id: find_sim
+        run: |
+          # Пытаемся найти первый доступный iPhone-симулятор
+          UDID=$(xcrun simctl list devices available | grep -m 1 -E "iPhone" | sed -E 's/.*\(([-0-9A-F]+)\).*/\1/')
+          if [ -z "$UDID" ]; then
+            echo "No iPhone simulator found. Downloading iOS runtime..."
+            xcodebuild -downloadPlatform iOS
+            UDID=$(xcrun simctl list devices available | grep -m 1 -E "iPhone" | sed -E 's/.*\(([-0-9A-F]+)\).*/\1/')
+          fi
+          if [ -z "$UDID" ]; then
+            echo "Still no iPhone simulator. Exiting."
+            exit 1
+          fi
+          echo "UDID=$UDID" >> $GITHUB_OUTPUT
+          echo "Selected simulator UDID: $UDID"
 
       - name: List available simulators
         run: xcrun simctl list devices available
@@ -45,7 +57,7 @@ jobs:
           xcodebuild build \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
-            -destination "$DESTINATION" \
+            -destination "id=${{ steps.find_sim.outputs.UDID }}" \
             -derivedDataPath DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
@@ -55,7 +67,7 @@ jobs:
           xcodebuild test \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
-            -destination "$DESTINATION" \
+            -destination "id=${{ steps.find_sim.outputs.UDID }}" \
             -derivedDataPath DerivedData \
             -only-testing:PishiTests \
             -resultBundlePath UnitTests.xcresult \
@@ -67,7 +79,7 @@ jobs:
           xcodebuild test \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
-            -destination "$DESTINATION" \
+            -destination "id=${{ steps.find_sim.outputs.UDID }}" \
             -derivedDataPath DerivedData \
             -only-testing:PishiUITests \
             -resultBundlePath UITests.xcresult \
